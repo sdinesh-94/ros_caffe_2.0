@@ -9,8 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp roslib std_msgs sensor_msgs image_transport cv_bridge
 )
 
-set(CAFFE_INCLUDEDIR caffe/include caffe/distribute/include)
-set(CAFFE_LINK_LIBRARAY caffe/build/lib)
+set(CAFFE_INCLUDEDIR caffe/build/install/include)
+set(CAFFE_LINK_LIBRARAY caffe/build/install/lib)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
