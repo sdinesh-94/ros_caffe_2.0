@@ -15,4 +15,4 @@ RUN mkdir -p catkin_ws/src \
 
 # build omnimapper ros wrapper
 ADD build.sh catkin_ws/src/ros_caffe/build.sh
-RUN ./catkin_ws/src/ros_caffe/build.sh
+# RUN ./catkin_ws/src/ros_caffe/build.sh
