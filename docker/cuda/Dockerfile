@@ -30,11 +30,11 @@ RUN cd /tmp \
   && rm -rf /tmp/*
 
 # Ensure the CUDA libs and binaries are in the correct environment variables
-ENV LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-${CUDA_V}/lib64
-ENV PATH=$PATH:/usr/local/cuda-${CUDA_V}/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
+ENV PATH=$PATH:/usr/local/cuda/bin
 RUN ldconfig
 
 ADD cudnn-7.0-linux-x64-v3.0-prod.tgz /cudnn/cudnn-7.0-linux-x64-v3.0-prod
 RUN cd /cudnn/cudnn*/cuda \
-  && cp -r lib* /usr/local/cuda/lib64/ \
+  && cp -r lib*/* /usr/local/cuda/lib64/ \
   && cp include/cudnn.h /usr/local/cuda/include/

@@ -31,6 +31,7 @@ RUN cd /opt && git clone https://github.com/BVLC/caffe.git
 # Build Caffe core
 RUN cd /opt/caffe && \
   cp Makefile.config.example Makefile.config && \
+  sed -i '/^#.* USE_CUDNN /s/^#//' Makefile.config && \
   make all -j$(nproc)
 
 # Add ld-so.conf so it can find libcaffe.so
