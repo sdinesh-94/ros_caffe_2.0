@@ -1,0 +1,27 @@
+<launch>
+
+	<env name="ROSCONSOLE_CONFIG_FILE" value="$(find ros_caffe)/cfg/custom_rosconsole.conf"/>
+
+	<node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+		<param name="video_device" value="/dev/video0" />
+		<param name="image_width" value="640" />
+		<param name="image_height" value="480" />
+		<param name="pixel_format" value="mjpeg" />
+		<param name="camera_frame_id" value="usb_cam" />
+		<param name="io_method" value="mmap"/>
+	</node>
+
+	<node pkg="ros_caffe" type="ros_caffe_node" name="ros_caffe" output="screen">
+		<param name="ebt_tracker_type"    value="irls"/>
+
+		<remap from="~image"        to="/camera/rgb/image_rect_color"/>
+		<remap from="~camera_info"  to="/camera/rgb/camera_info"/>
+		<remap from="~detections"   to="/ros_caffe/detections"/>
+	</node>
+
+		<!-- RVIZ to view the visualization -->
+		<!-- <node name="RVIZ" pkg="rviz" type="rviz" args=" -d $(find object_tracking_2d_ros)/rviz/openni.rviz"/> -->
+		<!-- <node name="reconfigure_gui" pkg="dynamic_reconfigure" type="reconfigure_gui" /> -->
+		<!-- <node pkg="dynamic_reconfigure" type="reconfigure_gui" name="ros_caffe_config" args="/ros_caffe/reconfigure" /> -->
+
+	</launch>
