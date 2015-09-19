@@ -11,7 +11,7 @@ void InfoCallback(const sensor_msgs::CameraInfoConstPtr& camera_info)
 
 void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
-    /*
+
     // Dont atempt to use the image without having info about the camera first
     //    if(!has_camera_info_){
     //        ROS_WARN("No Camera Info Received Yet");
@@ -29,125 +29,30 @@ void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    cv::Mat subscribed_gray = subscribed_ptr->image;
+    cv::Mat img = subscribed_ptr->image;
 
+    // Run the classifier
+    std::vector<Prediction> predictions = classifier_->Classify(img);
 
-    // Apply the tracker to the image
-    ApplyTrackerSettingsCallback(tracker_);
-    tracker_->setPose(pose_cv);
-    ProcessUserActions();
-    tracker_->setImage(subscribed_gray);
-    if(ebt_reset_){
-        tracker_->init_ = false;
-        ROS_INFO("ObjectTrackin2D message input: RESET\n");
-        ebt_reset_ = false;
+    // Publish the predictions
+    PublishPredictions(predictions);
+}
+
+void PublishPredictions(const std::vector<Prediction>& predictions)  {
+    std_msgs::String msg;
+    std::stringstream ss;
+    for (size_t i = 0; i < predictions.size(); ++i) {
+        Prediction p = predictions[i];
+        ss << "[" << p.second << " - " << p.first << "]" << std::endl;
     }
-    if(ebt_auto_init_){
-        ebt_init_ = tracker_->init_;
-    }
-    if(ebt_init_){
-        tracker_->init_ = true;
-        tracker_->initialize();
-        ROS_INFO("ObjectTrackin2D message input: REINIT\n");
-        ebt_init_ = tracker_->init_;
-    }
-
-    if(ebt_init_)
-        return;
-
-    tracker_->tracking();
-
-
-    pose_cv = tracker_->getPose();
-    cov_cv = tracker_->getCovariance();
-
-
-    // Store the detection into an array struture
-    ObjectDetection d;
-    d.pose = pose_;
-    d.good = !tracker_->init_;
-    d.id = 0;
-    d.ns = ebt_obj_id_;
-    ObjectDetectionArray detections;
-    detections.push_back(d);
-
-    // Store the detection into an array struture
-    visualization_msgs::MarkerArray marker_transforms;
-    object_tracking_2d_ros::ObjectDetections object_detections;
-    object_detections.header.frame_id = msg->header.frame_id;
-    object_detections.header.stamp = msg->header.stamp;
-
-    // Loop over each detection
-    for(unsigned int i = 0; i < detections.size(); ++i)
-    {
-//        // skip bad detections
-//        if(!detections[i].good)
-//        {
-//            continue;
-//        }
-
-        // Get quaternion for the marker
-        Eigen::Matrix4d pose = GetDetectionTransform(detections[i]);
-        Eigen::Matrix3d R = pose.block<3,3>(0,0);
-        Eigen::Quaternion<double> q(R);
-
-        // Set the attributes for the marker
-        visualization_msgs::Marker marker_transform;
-        marker_transform.header.frame_id = msg->header.frame_id;
-        marker_transform.header.stamp = msg->header.stamp;
-//        stringstream convert;
-//        convert << "tag" << detections[i].id;
-        marker_transform.id = detections[i].id;
-        marker_transform.ns = detections[i].ns;
-
-        // Set the object mesh for the marker
-        marker_transform.type = visualization_msgs::Marker::MESH_RESOURCE;
-        marker_transform.mesh_resource = ebt_mesh_path_;
-        marker_transform.scale.x = 1;
-        marker_transform.scale.y = 1;
-        marker_transform.scale.z = 1;
-        marker_transform.color.r = 0.0;
-        marker_transform.color.g = 1.0;
-        marker_transform.color.b = 0.0;
-        marker_transform.color.a = 1.0;
-
-        // Set the marker's pose
-        marker_transform.action = visualization_msgs::Marker::ADD;
-        marker_transform.pose.position.x = pose(0,3);
-        marker_transform.pose.position.y = pose(1,3);
-        marker_transform.pose.position.z = pose(2,3);
-        marker_transform.pose.orientation.x = q.x();
-        marker_transform.pose.orientation.y = q.y();
-        marker_transform.pose.orientation.z = q.z();
-        marker_transform.pose.orientation.w = q.w();
-
-        // Add the marker to marker array message
-        marker_transforms.markers.push_back(marker_transform);
-
-        // Fill in Object detection.
-        object_tracking_2d_ros::ObjectDetection object_det;
-        object_det.header = marker_transform.header;
-        object_det.id = marker_transform.id;
-        object_det.ns = marker_transform.ns;
-        object_det.pose.pose = marker_transform.pose;
-        object_det.pose.covariance = cov_;
-        object_det.good = d.good;
-
-        // Add the detection to detection array message
-        object_detections.detections.push_back(object_det);
-    }
-
-    // Publish the marker and detection messages
-    marker_publisher_.publish(marker_transforms);
-    ebt_publisher_.publish(object_detections);
-    */
-
+    msg.data = ss.str();
+    predictions_publisher_.publish(msg);
 }
 
 void ConnectCallback(const ros::SingleSubscriberPublisher& info)
 {
     // Check for subscribers.
-    uint32_t subscribers = detection_publisher_.getNumSubscribers();
+    uint32_t subscribers = predictions_publisher_.getNumSubscribers();
     ROS_DEBUG("Subscription detected! (%d subscribers)", subscribers);
 
     if(subscribers && !running_)
@@ -167,14 +72,10 @@ void ConnectCallback(const ros::SingleSubscriberPublisher& info)
     }
 }
 
-void DisconnectHandler()
-{
-}
-
 void DisconnectCallback(const ros::SingleSubscriberPublisher& info)
 {
     // Check for subscribers.
-    uint32_t subscribers = detection_publisher_.getNumSubscribers();
+    uint32_t subscribers = predictions_publisher_.getNumSubscribers();
     ROS_DEBUG("Unsubscription detected! (%d subscribers)", subscribers);
 
     if(!subscribers && running_)
@@ -186,10 +87,20 @@ void DisconnectCallback(const ros::SingleSubscriberPublisher& info)
     }
 }
 
+void DisconnectHandler()
+{
+}
+
 void GetParameterValues()
 {
     // Load node-wide configuration values.
-//    node_->param ("ebt_tracker_type", ebt_tracker_type_, std::string("irls"));
+    node_->param ("model_path",     model_path_, std::string(""));
+    node_->param ("weights_path",   weights_path_, std::string(""));
+    node_->param ("mean_file",      mean_file_, std::string(""));
+    node_->param ("label_file",     label_file_, std::string(""));
+
+    node_->param ("test_image",     test_image_, false);
+    node_->param ("image_path",     image_path_, std::string(""));
 }
 
 //void ParameterCallback(ros_caffe::ros_caffe_rosConfig &config, uint32_t level) {
@@ -204,17 +115,24 @@ void SetupPublisher()
     ros::SubscriberStatusCallback disconnect_callback = &DisconnectCallback;
 
     // Publisher
-//    detection_publisher_ = node_->advertise<object_tracking_2d_ros::ObjectDetections>(
-//                DEFAULT_DETECTIONS_TOPIC, 1, connect_callback, disconnect_callback);
-}
-
-void SetupSubscriber()
-{
+    predictions_publisher_ = node_->advertise<std_msgs::String>(
+                DEFAULT_PREDICTIONS_TOPIC, 1, connect_callback, disconnect_callback);
 }
 
 void InitializeClassifier()
 {
-
+    classifier_ = new Classifier(model_path_, weights_path_, mean_file_, label_file_);
+    if (test_image_){
+        cv::Mat img = cv::imread(image_path_, -1);
+        ROS_INFO("Predicting Test Image");
+        std::vector<Prediction> predictions = classifier_->Classify(img);
+        /* Print the top N predictions. */
+        for (size_t i = 0; i < predictions.size(); ++i) {
+            Prediction p = predictions[i];
+            ROS_INFO_STREAM("Prediction: " << std::fixed << std::setprecision(4) << p.second << " - \"" << p.first << "\"" << std::endl);
+        }
+        PublishPredictions(predictions);
+    }
 }
 
 void InitializeROSNode(int argc, char **argv)
@@ -231,7 +149,6 @@ int main(int argc, char **argv)
     InitializeROSNode(argc,argv);
     GetParameterValues();
     SetupPublisher();
-    SetupSubscriber();
     InitializeClassifier();
 
     // Start Node
@@ -250,6 +167,9 @@ int main(int argc, char **argv)
         ros::spinOnce();
     }
     ROS_INFO("ros_caffe node stopped.");
+
+    // Delete stuff
+    delete classifier_;
 
     return EXIT_SUCCESS;
 }
