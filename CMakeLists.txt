@@ -6,16 +6,28 @@ add_definitions(-DCPU_ONLY=1)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp roslib std_msgs sensor_msgs image_transport cv_bridge
+  cv_bridge
+  std_msgs
+  sensor_msgs
+  image_transport
+  roscpp
+  roslib
+  cmake_modules
+  message_generation
+  dynamic_reconfigure
 )
 
-set(CAFFE_INCLUDEDIR caffe/build/install/include)
-set(CAFFE_LINK_LIBRARAY caffe/build/install/lib)
+#set(CAFFE_INCLUDEDIR caffe/build/install/include)
+#set(CAFFE_LINK_LIBRARAY caffe/build/install/lib)
+
+set(CAFFE_INCLUDEDIR /opt/caffe/include /opt/caffe/distribute/include /opt/caffe/.build_release/src)
+set(CAFFE_LINK_LIBRARAY /opt/caffe/build/lib)
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
 
+include(FindPkgConfig)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -83,40 +95,63 @@ find_package(OpenCV REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES ros_caffe
-#  CATKIN_DEPENDS roscpp
-#  DEPENDS system_lib
+        INCLUDE_DIRS include
+        LIBRARIES ros_caffe
+        CATKIN_DEPENDS
+                cv_bridge
+                std_msgs
+                sensor_msgs
+                image_transport
+                roscpp
+                cmake_modules
+                message_generation
+        DEPENDS system_lib
 )
 
 ###########
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(include)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
+# ## Declare a cpp library
+# # Tell CMake that the external project generated a library so we
+# # can add dependencies here instead of later.
+#add_library(ros_caffe UNKNOWN IMPORTED)
+#set_property(TARGET ros_caffe
+#  PROPERTY IMPORTED_LOCATION
+#  ${ros_caffe_LIBRARIES}
+#)
+
+# ## Specify additional locations of header files
+# ## Your package locations should be listed before other locations
+include_directories( include
+    ${catkin_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    ${CAFFE_INCLUDEDIR}
 )
-include_directories(${CAFFE_INCLUDEDIR})
-## Declare a cpp library
-# add_library(ros_caffe
-#   src/${PROJECT_NAME}/ros_caffe.cpp
-# )
 
-## Declare a cpp executable
-# add_executable(ros_caffe_node src/ros_caffe_node.cpp)
+# ## Declare a cpp executable
+add_library(ros_caffe  src/ros_caffe.cpp)
+link_directories(${CAFFE_LINK_LIBRARAY})
+add_executable(ros_caffe_node src/ros_caffe.cpp)
 
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(ros_caffe_node ros_caffe_generate_messages_cpp)
+# ## Add cmake target dependencies of the executable/library
+# ## as an example, message headers may need to be generated before nodes
+# make sure configure headers are built before any node using them
+add_dependencies(ros_caffe
+    ${PROJECT_NAME}_gencfg)
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(ros_caffe_node
-#   ${catkin_LIBRARIES}
-# )
+add_dependencies(ros_caffe_node
+    ${PROJECT_NAME}_gencfg)
+
+# ## Specify libraries to link a library or executable target against
+target_link_libraries(ros_caffe_node
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${CAFFE_LINK_LIBRARAY}
+    ros_caffe
+    glog
+    caffe
+)
 
 #############
 ## Install ##
@@ -133,11 +168,11 @@ include_directories(${CAFFE_INCLUDEDIR})
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ros_caffe ros_caffe_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS ros_caffe ros_caffe_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -147,11 +182,10 @@ include_directories(${CAFFE_INCLUDEDIR})
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+   ${ros_caffe_LIBRARIES}
+   DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
 
 #############
 ## Testing ##
@@ -165,6 +199,10 @@ include_directories(${CAFFE_INCLUDEDIR})
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-link_directories(${CAFFE_LINK_LIBRARAY})
-add_executable(ros_caffe_test src/ros_caffe_test.cpp)
-target_link_libraries(ros_caffe_test ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} caffe glog)
+
+# link_directories(${CAFFE_LINK_LIBRARAY})
+# add_executable(ros_caffe_test src/ros_caffe_test.cpp)
+# target_link_libraries(ros_caffe_test ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} caffe glog)
+
+# add_executable(ros_caffe src/ros_caffe.cpp)
+# target_link_libraries(ros_caffe ${catkin_LIBRARIES} ${OpenCV_LIBRARIES} caffe glog)
