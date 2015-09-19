@@ -43,10 +43,7 @@ image_transport::Subscriber image_subscriber;
 // EBT plugin perams
 //int ebt_maxd_;
 
-// EBT plugin global
-//Eigen::Matrix4d pose_;
-
-// Settings and local information
+// Settings and global information
 bool running_;
 bool has_camera_info_;
 bool quit_;

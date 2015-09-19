@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ros_caffe)
 
-add_definitions(-DCPU_ONLY=1)
+#add_definitions(-DCPU_ONLY=1)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -23,9 +23,13 @@ find_package(catkin REQUIRED COMPONENTS
 set(CAFFE_INCLUDEDIR /opt/caffe/include /opt/caffe/distribute/include /opt/caffe/.build_release/src)
 set(CAFFE_LINK_LIBRARAY /opt/caffe/build/lib)
 
+set(CUDA_INCLUDEDIR /usr/local/cuda/include /usr/local/cuda/src)
+set(CUDA_LINK_LIBRARAY /usr/local/cuda/lib64)
+
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(OpenCV REQUIRED)
+find_package(CUDA REQUIRED)
 
 include(FindPkgConfig)
 
@@ -127,6 +131,7 @@ include_directories( include
     ${catkin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${CAFFE_INCLUDEDIR}
+    ${CUDA_INCLUDEDIR}
 )
 
 # ## Declare a cpp executable
@@ -151,6 +156,7 @@ target_link_libraries(ros_caffe_node
     ros_caffe
     glog
     caffe
+    cuda
 )
 
 #############
