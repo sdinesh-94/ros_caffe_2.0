@@ -57,6 +57,8 @@ std::string mean_file_;
 std::string label_file_;
 bool test_image_;
 std::string image_path_;
+bool resize_image_;
+double resize_ratio_;
 
 // Package Functions
 

@@ -31,6 +31,15 @@ void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
     }
     cv::Mat img = subscribed_ptr->image;
 
+    if(resize_image_){
+        int width = img.cols * resize_ratio_;
+        int height = img.rows * resize_ratio_;
+        cv::Mat tmp = cv::Mat::zeros( width, height, img.type() );
+        cv::resize(img, tmp, tmp.size());
+        img = tmp;
+        std::cout << "img.zise(): " << img.size() << std::endl;
+    }
+
     // Run the classifier
     std::vector<Prediction> predictions = classifier_->Classify(img);
 
@@ -101,6 +110,9 @@ void GetParameterValues()
 
     node_->param ("test_image",     test_image_, false);
     node_->param ("image_path",     image_path_, std::string(""));
+
+    node_->param ("resize_image",   resize_image_, true);
+    node_->param ("resize_ratio",   resize_ratio_, 0.1);
 }
 
 //void ParameterCallback(ros_caffe::ros_caffe_rosConfig &config, uint32_t level) {
