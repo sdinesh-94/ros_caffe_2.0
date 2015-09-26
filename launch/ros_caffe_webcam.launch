@@ -12,16 +12,19 @@
 	</node>
 
 	<node pkg="ros_caffe" type="ros_caffe_node" name="ros_caffe" output="screen">
-		<param name="ebt_tracker_type"    value="irls"/>
+		<param name="model_path"    value="$(find ros_caffe)/data/deploy.prototxt"/>
+		<param name="weights_path"  value="$(find ros_caffe)/data/bvlc_reference_caffenet.caffemodel"/>
+		<param name="mean_file"     value="$(find ros_caffe)/data/imagenet_mean.binaryproto"/>
+		<param name="label_file"    value="$(find ros_caffe)/data/synset_words.txt"/>
+		<param name="image_path"    value="$(find ros_caffe)/data/cat.jpg"/>
+		<param name="test_image"    value="true"/>
 
-		<remap from="~image"        to="/camera/rgb/image_rect_color"/>
+		<remap from="~image"        to="/camera/rgb/image_raw"/>
 		<remap from="~camera_info"  to="/camera/rgb/camera_info"/>
 		<remap from="~detections"   to="/ros_caffe/detections"/>
 	</node>
 
 		<!-- RVIZ to view the visualization -->
-		<!-- <node name="RVIZ" pkg="rviz" type="rviz" args=" -d $(find object_tracking_2d_ros)/rviz/openni.rviz"/> -->
-		<!-- <node name="reconfigure_gui" pkg="dynamic_reconfigure" type="reconfigure_gui" /> -->
-		<!-- <node pkg="dynamic_reconfigure" type="reconfigure_gui" name="ros_caffe_config" args="/ros_caffe/reconfigure" /> -->
+		<!-- <node name="RVIZ" pkg="rviz" type="rviz" args=" -d $(find ros_caffe)/rviz/ros_caffe_webcam.rviz"/> -->
 
 	</launch>
