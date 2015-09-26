@@ -16,7 +16,7 @@
 
 		<remap from="~image"        to="/camera/rgb/image_raw"/>
 		<remap from="~camera_info"  to="/camera/rgb/camera_info"/>
-		<remap from="~detections"   to="/ros_caffe/detections"/>
+		<remap from="~predictions"   to="/ros_caffe/predictions"/>
 	</node>
 
 	<!-- RVIZ to view the visualization -->

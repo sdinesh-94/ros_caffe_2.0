@@ -24,7 +24,7 @@
 // Define the default topic names
 const std::string DEFAULT_IMAGE_TOPIC       = "image";
 const std::string DEFAULT_CAMERA_INFO_TOPIC = "camera_info";
-const std::string DEFAULT_PREDICTIONS_TOPIC  = "detections";
+const std::string DEFAULT_PREDICTIONS_TOPIC  = "predictions";
 
 // ROS parts
 ros::NodeHandlePtr node_;
