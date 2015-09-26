@@ -2,7 +2,6 @@
 # set -e
 
 source /opt/ros/indigo/setup.bash
-source ~/catkin_ws/devel/setup.bash
 
 cd ~/catkin_ws/src
 
