@@ -1,5 +1,5 @@
 //Include the base of ros_caffe
-#include "ros_caffe.h"
+#include "ros_caffe/ros_caffe.h"
 
 using namespace std;
 

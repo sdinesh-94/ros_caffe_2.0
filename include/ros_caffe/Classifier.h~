@@ -233,8 +233,7 @@ void Classifier::SetMean(const string& mean_file) {
     /* Convert from BlobProto to Blob<float> */
     Blob<float> mean_blob;
     mean_blob.FromProto(blob_proto);
-    CHECK_EQ(mean_blob.channels(), num_channels_)
- << "Number of channels of mean file doesn't match input layer.";
+    CHECK_EQ(mean_blob.channels(), num_channels_);
 
     /* The format of the mean file is planar 32-bit float BGR or grayscale. */
     std::vector<cv::Mat> channels;
