@@ -11,7 +11,7 @@ Integrate Caffe model into ROS
 ## Grab the source
 `$ cd $CATKIN_WS/src`
 
-`$ git clone --recursive https://github.com/tzutalin/ros_caffe.git`
+`$ git clone --recursive https://github.com/CreativeCimmons/ros_caffe.git`
 
 `$ cd $CATKIN_WS/src/ros_caffe`
 
@@ -74,13 +74,6 @@ Receive an image :
 
 /camera/rgb/image_raw
 
-## Note
 
-* Optional: Download the model and install Caffe by following the [Blog](http://tzutalin.blogspot.tw/2015/06/setup-caffe.html) or [Caffe offical site](http://caffe.berkeleyvision.org/installation.html)
 
-You can change your Caffe's include and lib path in CMakeLists.txt. 
-
-	`set(CAFFE_INCLUDEDIR caffe/include caffe/distribute/include)`
-	
-	`set(CAFFE_LINK_LIBRARAY caffe/lib)`
 
